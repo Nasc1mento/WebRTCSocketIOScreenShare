@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Screen Share Client</title>
+  <!-- <style>
+    #video {
+      background-color: black;
+    }
+  </style> -->
+</head>
+<body>
+  <h1>Screen Share Client</h1>
+  <button onclick="toggleVideo()">Toggle Video</button>
+  <button id="start">Start Receive</button>
+  <video id="video" autoplay></video>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const video = document.querySelector('#video');
+    const startButton = document.querySelector('#start');
+    let pc = null;
+
+
+    async function startReceive() {
+      pc = new RTCPeerConnection();
+      pc.onicecandidate = (event) => {
+        console.log("candidate");
+        if (event.candidate) {
+          socket.emit('candidate', event.candidate);
+        }
+      };
+     
+      await negotiate();
+      // pc.createOffer().then(offer => {
+      //   return pc.setLocalDescription(offer);
+      // }).then(() => {
+      //   socket.emit('offer', pc.localDescription);
+      // });
+
+    }
+
+    async function negotiate() {
+      console.log("offer")
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      
+      socket.emit('offer', offer);
+      
+      console.log("fim offer")
+    }
+
+    // function createPeerConnection() {
+    //   console.log("create peer")
+    //   pc = new RTCPeerConnection();
+    // }
+
+    function toggleVideo() {
+      video.style.display = (video.style.display == 'none' ? 'block' : 'none');
+    }
+
+    
+
+    socket.on('answer', async (answer) => {
+      console.log(answer)
+      await pc.setRemoteDescription(answer);
+          // pc.ontrack = (event) => {
+          //   console.log(event)
+          //   video.srcObject = event.streams[0];
+          // };
+        console.log("fim answer")
+    });
+
+    socket.on('candidate', async (candidate) => {
+      console.log("aaaaaaaaaaaaaaaaaaaaa");
+      await pc.addIceCandidate(candidate);
+    });
+
+
+    
+
+    startButton.addEventListener('click', startReceive);
+  </script>
+</body>
+</html>
