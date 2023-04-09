@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Screen Share Client</title>
+  <!-- <style>
+    #video {
+      background-color: black;
+    }
+  </style> -->
+</head>
+<body>
+  <h1>Screen Share Client</h1>
+  <button id="start">Start Receive</button>
+  <video id="video" autoplay></video>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const video = document.querySelector('#video');
+    const startButton = document.querySelector('#start');
+    let pc = null;
+
+
+    async function startReceive() {
+      stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+      console.log(stream)
+      pc = new RTCPeerConnection();
+      stream.getTracks().forEach(track => pc.addTrack(track, stream));
+      pc.onicecandidate = (event) => {
+        console.log("candidate");
+        if (event.candidate) {
+          socket.emit('candidate', event.candidate);
+        }
+      };
+
+      // const channel = pc.createDataChannel('candidate');
+
+      pc.ontrack = (event) => {
+            console.log(event)
+            video.srcObject = event.streams[0];
+      };
+     
+      const offer = await pc.createOffer();
+			await pc.setLocalDescription(offer);
+			socket.emit('offer', offer);
+      
+    }
+
+
+    
+
+    socket.on('answer', async (answer) => {
+      await pc.setRemoteDescription(answer);
+        console.log(answer)
+    });
+
+    socket.on('candidate', async (candidate) => {
+      console.log("candidate");
+      await pc.addIceCandidate(candidate);
+    });
+
+    startButton.addEventListener('click', startReceive);
+  </script>
+</body>
+</html>
