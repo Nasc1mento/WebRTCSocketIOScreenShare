@@ -27,7 +27,7 @@
 
     async function startScreenShare() {
       stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-      video.srcObject = stream; 
+      video.srcObject = stream;
     }
 
     socket.on('offer', async (offer) => { 
@@ -37,6 +37,8 @@
 
       pc.onicecandidate = event => {   
         if (event.candidate) {
+          event.candidate.usernameFragment = null;
+          console.log("candidate");
           socket.emit('candidate', event.candidate);
         }          
       };
@@ -45,7 +47,7 @@
 			const answer = await pc.createAnswer();
 			await pc.setLocalDescription(answer);
 			socket.emit('answer', answer);
-      console.log(offer);
+      console.log(offer)
     
     });
 
@@ -57,10 +59,12 @@
       pc = null;
     }
     
+
     socket.on('candidate', async (candidate) => {
       console.log("candidate");
       await pc.addIceCandidate(candidate);
     });
+
     
     startButton.addEventListener('click', startScreenShare);
     stopButton.addEventListener('click', stopScreenShare);

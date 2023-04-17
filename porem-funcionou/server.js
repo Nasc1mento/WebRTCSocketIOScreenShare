@@ -1,7 +1,16 @@
+const fs = require('fs');
+const https = require('https');
 const express = require('express');
 const app = express();
-const http = require('http').createServer(app);
-const io = require('socket.io')(http, {
+
+const options = {
+  key: fs.readFileSync('file.pem'),
+  cert: fs.readFileSync('file.crt')
+};
+
+const server = https.createServer(options, app);
+
+const io = require('socket.io')(server, {
   cors: {
     origin: '*'
   }
@@ -33,6 +42,6 @@ io.on('connection', (socket) => {
   });
 });
 
-http.listen(3000, () => {
+server.listen(3000, () => {
   console.log('listening on *:3000');
 });

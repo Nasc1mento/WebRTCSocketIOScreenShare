@@ -14,7 +14,7 @@
     const socket = io();
     const video = document.querySelector('#video');
     const startButton = document.querySelector('#start');
-    let pc = null;
+    
 
     async function startReceive() {
       pc = new RTCPeerConnection();
@@ -22,6 +22,7 @@
 
       pc.onicecandidate = (event) => {
         if (event.candidate) {
+          event.candidate.usernameFragment = null;
           socket.emit('candidate', event.candidate);
         }
       };
@@ -32,23 +33,20 @@
 
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);     
-      await socket.emit('offer', offer);      
+      socket.emit('offer', offer);      
     }
 
     socket.on('answer', async (answer) => {
-      if (pc.signalingState === 'have-local-offer' || pc.signalingState === 'have-remote-offer' || pc.signalingState === 'stable') {
-        await pc.setRemoteDescription(answer);
-        console.log(answer);
-      }
-      
+      await pc.setRemoteDescription(answer);
+      console.log(answer);
     });
 
-    socket.on('candidate', async (candidate) => {
-      if (pc.signalingState !== 'closed') {
-        await pc.addIceCandidate(candidate);
-      }
-
+    socket.on('candidate', async (candidate) => {     
+      await pc.addIceCandidate(candidate);
     });
+    
+
+    
 
     startButton.addEventListener('click', startReceive);
   </script>
