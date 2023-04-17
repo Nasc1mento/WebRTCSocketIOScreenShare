@@ -7,6 +7,7 @@
 <body>
   <h1>Screen Share Client</h1>
   <button id="start">Start Receive</button>
+  <button id="capture">Capture</button>
   <video id="video" autoplay></video>
 
   <script src="/socket.io/socket.io.js"></script>
@@ -14,7 +15,8 @@
     const socket = io();
     const video = document.querySelector('#video');
     const startButton = document.querySelector('#start');
-    
+    const captureButton = document.querySelector('#capture');
+    let pc = null;
 
     async function startReceive() {
       pc = new RTCPeerConnection();
@@ -37,18 +39,28 @@
     }
 
     socket.on('answer', async (answer) => {
-      await pc.setRemoteDescription(answer);
       console.log(answer);
+      await pc.setRemoteDescription(answer);
     });
 
     socket.on('candidate', async (candidate) => {     
       await pc.addIceCandidate(candidate);
     });
     
-
-    
+    function capture() {
+			var canvas = document.createElement("canvas");
+			canvas.width = video.videoWidth;
+			canvas.height = video.videoHeight;
+			var ctx = canvas.getContext("2d");
+			ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+			var link = document.createElement('a');
+			link.download = 'capture.png';
+			link.href = canvas.toDataURL("image/png");
+			link.click();
+		}
 
     startButton.addEventListener('click', startReceive);
+    captureButton.addEventListener('click', capture);
   </script>
 </body>
 </html>
