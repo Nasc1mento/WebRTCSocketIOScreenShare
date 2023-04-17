@@ -21,12 +21,10 @@
     const startButton = document.querySelector('#start');
     let pc = null;
 
-
     async function startReceive() {
-      stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-      console.log(stream)
       pc = new RTCPeerConnection();
-      stream.getTracks().forEach(track => pc.addTrack(track, stream));
+      pc.addTransceiver("video", { direction: "recvonly" });
+
       pc.onicecandidate = (event) => {
         console.log("candidate");
         if (event.candidate) {
@@ -34,29 +32,20 @@
         }
       };
 
-      // const channel = pc.createDataChannel('candidate');
-
       pc.ontrack = (event) => {
-            console.log(event)
-            video.srcObject = event.streams[0];
+        video.srcObject = event.streams[0];       
       };
-     
+
       const offer = await pc.createOffer();
-			await pc.setLocalDescription(offer);
-			socket.emit('offer', offer);
-      
+      await pc.setLocalDescription(offer);     
+      await socket.emit('offer', offer);      
     }
 
-
-    
-
     socket.on('answer', async (answer) => {
-      await pc.setRemoteDescription(answer);
-        console.log(answer)
+      await pc.setRemoteDescription(answer);  
     });
 
     socket.on('candidate', async (candidate) => {
-      console.log("candidate");
       await pc.addIceCandidate(candidate);
     });
 
