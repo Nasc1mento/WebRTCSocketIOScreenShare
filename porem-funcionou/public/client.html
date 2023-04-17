@@ -3,11 +3,6 @@
 <head>
   <meta charset="utf-8">
   <title>Screen Share Client</title>
-  <!-- <style>
-    #video {
-      background-color: black;
-    }
-  </style> -->
 </head>
 <body>
   <h1>Screen Share Client</h1>
@@ -26,7 +21,6 @@
       pc.addTransceiver("video", { direction: "recvonly" });
 
       pc.onicecandidate = (event) => {
-        console.log("candidate");
         if (event.candidate) {
           socket.emit('candidate', event.candidate);
         }
@@ -42,11 +36,18 @@
     }
 
     socket.on('answer', async (answer) => {
-      await pc.setRemoteDescription(answer);  
+      if (pc.signalingState === 'have-local-offer' || pc.signalingState === 'have-remote-offer' || pc.signalingState === 'stable') {
+        await pc.setRemoteDescription(answer);
+        console.log(answer);
+      }
+      
     });
 
     socket.on('candidate', async (candidate) => {
-      await pc.addIceCandidate(candidate);
+      if (pc.signalingState !== 'closed') {
+        await pc.addIceCandidate(candidate);
+      }
+
     });
 
     startButton.addEventListener('click', startReceive);
