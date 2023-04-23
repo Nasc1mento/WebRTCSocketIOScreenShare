@@ -46,6 +46,8 @@
     socket.on('candidate', async (candidate) => {     
       await pc.addIceCandidate(candidate);
     });
+
+
     
     function capture() {
 			var canvas = document.createElement("canvas");
@@ -63,4 +65,10 @@
     captureButton.addEventListener('click', capture);
   </script>
 </body>
+<style>
+  #video {
+    display: block;
+    margin: 0 auto;
+  }
+</style>
 </html>

@@ -26,7 +26,12 @@
 
 
     async function startScreenShare() {
-      stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+      stream = await navigator.mediaDevices.getDisplayMedia({ 
+        video: {
+          width: { max: 1024 },
+          height: { max: 768 }
+        }
+      });
       video.srcObject = stream;
     }
 
@@ -71,4 +76,10 @@
 
   </script>
 </body>
+<style>
+  #video {
+    display: block;
+    margin: 0 auto;
+  }
+</style>
 </html>
