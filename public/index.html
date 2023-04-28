@@ -1,6 +1,5 @@
 <!DOCTYPE html>
-<html>
-  
+<html> 
 <head>
   <meta charset="utf-8">
   <title>Screen Share</title>
@@ -16,61 +15,44 @@
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
-
+    let stream = null;
     const startButton = document.querySelector('#start');
     const stopButton = document.querySelector('#stop');
-    const video = document.querySelector('#video');
-
-    let stream = null;
-    let pc = null;
-
 
     async function startScreenShare() {
-      stream = await navigator.mediaDevices.getDisplayMedia({ 
+      const stream = await navigator.mediaDevices.getDisplayMedia({ 
         video: {
           width: { max: 1024 },
           height: { max: 768 }
         }
       });
+      const video = document.createElement('video');
       video.srcObject = stream;
-    }
+      video.autoplay = true;
 
-    socket.on('offer', async (offer) => { 
+      document.body.appendChild(video);
 
-      pc = new RTCPeerConnection();
-      stream.getTracks().forEach(track => pc.addTrack(track, stream));
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
 
-      pc.onicecandidate = event => {   
-        if (event.candidate) {
-          event.candidate.usernameFragment = null;
-          console.log("candidate");
-          socket.emit('candidate', event.candidate);
-        }          
-      };
-
-      await pc.setRemoteDescription(offer);
-			const answer = await pc.createAnswer();
-			await pc.setLocalDescription(answer);
-			socket.emit('answer', answer);
-      console.log(offer)
-    
-    });
-
+      function captureAndSendFrame() {
+          context.drawImage(video, 0, 0, canvas.width, canvas.height);
+          console.log(canvas.width, canvas.height)
+          const base64Data = canvas.toDataURL();
+          socket.emit('frame', base64Data);
+          setTimeout(() => {
+            requestAnimationFrame(captureAndSendFrame);
+          }, 100);
+        }
+        captureAndSendFrame();
+      }
+  
     function stopScreenShare() {
-      stream.getTracks().forEach(track => track.stop());
+      socket.off("frame");
+      video.src = null;
       stream = null;
-      video.srcObject = null;
-      pc.close();
-      pc = null;
-    }
-    
-
-    socket.on('candidate', async (candidate) => {
-      console.log("candidate");
-      await pc.addIceCandidate(candidate);
-    });
-
-    
+    } 
+   
     startButton.addEventListener('click', startScreenShare);
     stopButton.addEventListener('click', stopScreenShare);
 

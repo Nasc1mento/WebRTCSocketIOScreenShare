@@ -20,17 +20,10 @@ app.get('/client', (req, res) => {
 io.on('connection', (socket) => {
   console.log('a user connected');
 
-  socket.on('offer', (offer) => {
-    socket.broadcast.emit('offer', offer);
+  socket.on('frame', (frame) => {
+    socket.broadcast.emit('frame', frame);
   });
 
-  socket.on('answer', (answer) => {
-    socket.broadcast.emit('answer', answer);
-  });
-
-  socket.on('candidate', (candidate) => {
-    socket.broadcast.emit('candidate', candidate);
-  });
 });
 
 http.listen(3000, () => {
