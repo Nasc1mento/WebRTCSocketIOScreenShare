@@ -7,6 +7,8 @@ const io = require('socket.io')(http, {
   }
 });
 
+let ids = [];
+
 app.use(express.static('public'));
 
 app.get('/', (req, res) => {
@@ -18,13 +20,24 @@ app.get('/client', (req, res) => {
 });
 
 io.on('connection', (socket) => {
-  console.log('a user connected');
+  console.log('user connected id: '+socket.id);
+  ids.push(socket.id); 
+  io.emit('ids', ids);
 
   socket.on('frame', (frame) => {
-    socket.broadcast.emit('frame', frame);
+    ids.forEach(id => {
+      io.to(id).emit('frame', frame);
+    });
   });
 
+  socket.on('disconnect', function () {
+    var index = ids.indexOf(socket.id);
+    ids.splice(index, 1);
+    io.emit('ids', ids);
+    console.log('user disconnected id: '+socket.id); 
+  });
 });
+
 
 http.listen(3000, () => {
   console.log('listening on *:3000');

@@ -16,11 +16,6 @@
   <script>
     const socket = io();
     let stream = null;
-    let isTabActive = true;
-
-    document.addEventListener('visibilitychange', () => {
-      isTabActive = !document.hidden;
-    });
 
     const startButton = document.querySelector('#start');
     const stopButton = document.querySelector('#stop');
@@ -40,8 +35,9 @@
       canvas.height = 600;
       const context = canvas.getContext('2d', { willReadFrequently: true });
 
+      
+
       function captureAndSendFrame() {
-        if (isTabActive) {
           context.drawImage(video, 0, 0, canvas.width, canvas.height);
           canvas.toBlob(function(blob) {
             const reader = new FileReader();
@@ -51,7 +47,6 @@
             };
             reader.readAsDataURL(blob);
           }, 'image/jpeg', 0.8);
-        }
         setTimeout(captureAndSendFrame, 50);
       }
       captureAndSendFrame();
@@ -63,6 +58,10 @@
       stream.getTracks().forEach(track => track.stop());
       stream = null;
     }
+
+    socket.on('ids', (ids)=>{
+        console.log(ids)
+    })
 
     startButton.addEventListener('click', startScreenShare);
     stopButton.addEventListener('click', stopScreenShare);
