@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html> 
+<html>
 <head>
   <meta charset="utf-8">
   <title>Screen Share</title>
@@ -16,22 +16,24 @@
   <script>
     const socket = io();
     let stream = null;
+    let isTabActive = true;
+
+    document.addEventListener('visibilitychange', () => {
+      isTabActive = !document.hidden;
+    });
+
     const startButton = document.querySelector('#start');
     const stopButton = document.querySelector('#stop');
 
     async function startScreenShare() {
-      stream = await navigator.mediaDevices.getDisplayMedia({ 
+      stream = await navigator.mediaDevices.getDisplayMedia({
         video: {
           width: { max: 1024 },
           height: { max: 768 }
         }
       });
       
-      const video = document.createElement('video');
       video.srcObject = stream;
-      video.autoplay = true;
-
-      document.body.appendChild(video);
 
       const canvas = document.createElement('canvas');
       canvas.width = 800;
@@ -39,30 +41,31 @@
       const context = canvas.getContext('2d', { willReadFrequently: true });
 
       function captureAndSendFrame() {
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob(function(blob) {
-          const reader = new FileReader();
-          reader.onloadend = function() {
-            const imageData = reader.result;
-            socket.emit('frame', imageData);
-          };
-          reader.readAsDataURL(blob);
-        }, 'image/jpeg', 0.5);
+        if (isTabActive) {
+          context.drawImage(video, 0, 0, canvas.width, canvas.height);
+          canvas.toBlob(function(blob) {
+            const reader = new FileReader();
+            reader.onloadend = function() {
+              const imageData = reader.result;
+              socket.emit('frame', imageData);
+            };
+            reader.readAsDataURL(blob);
+          }, 'image/jpeg', 0.8);
+        }
         setTimeout(captureAndSendFrame, 50);
       }
       captureAndSendFrame();
     }
- 
+
     function stopScreenShare() {
       socket.off('frame');
       video.srcObject = null;
       stream.getTracks().forEach(track => track.stop());
       stream = null;
-    } 
-   
+    }
+
     startButton.addEventListener('click', startScreenShare);
     stopButton.addEventListener('click', stopScreenShare);
-
   </script>
 </body>
 <style>
