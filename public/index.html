@@ -20,12 +20,13 @@
     const stopButton = document.querySelector('#stop');
 
     async function startScreenShare() {
-      const stream = await navigator.mediaDevices.getDisplayMedia({ 
+      stream = await navigator.mediaDevices.getDisplayMedia({ 
         video: {
           width: { max: 1024 },
           height: { max: 768 }
         }
       });
+      
       const video = document.createElement('video');
       video.srcObject = stream;
       video.autoplay = true;
@@ -33,23 +34,29 @@
       document.body.appendChild(video);
 
       const canvas = document.createElement('canvas');
-      const context = canvas.getContext('2d');
+      canvas.width = 800;
+      canvas.height = 600;
+      const context = canvas.getContext('2d', { willReadFrequently: true });
 
       function captureAndSendFrame() {
-          context.drawImage(video, 0, 0, canvas.width, canvas.height);
-          console.log(canvas.width, canvas.height)
-          const base64Data = canvas.toDataURL();
-          socket.emit('frame', base64Data);
-          setTimeout(() => {
-            requestAnimationFrame(captureAndSendFrame);
-          }, 100);
-        }
-        captureAndSendFrame();
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(function(blob) {
+          const reader = new FileReader();
+          reader.onloadend = function() {
+            const imageData = reader.result;
+            socket.emit('frame', imageData);
+          };
+          reader.readAsDataURL(blob);
+        }, 'image/jpeg', 0.5);
+        setTimeout(captureAndSendFrame, 50);
       }
-  
+      captureAndSendFrame();
+    }
+ 
     function stopScreenShare() {
-      socket.off("frame");
-      video.src = null;
+      socket.off('frame');
+      video.srcObject = null;
+      stream.getTracks().forEach(track => track.stop());
       stream = null;
     } 
    

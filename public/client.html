@@ -18,12 +18,12 @@
     const socket = io();
     const img = document.querySelector('#frame');
     
-    function displayFrame(base64Data) {
-      img.src = base64Data;
+    function displayFrame(frame) {
+      img.src = frame;
     }
 
-    socket.on('frame', (base64Data) => {
-      displayFrame(base64Data);
+    socket.on('frame', (frame) => {
+      displayFrame(frame);
     });
   </script>
 </body>
