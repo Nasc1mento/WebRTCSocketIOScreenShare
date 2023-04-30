@@ -5,7 +5,7 @@
   <title>Screen Share</title>
 </head>
 <body>
-  <h1>Screen Share</h1>
+  <h1>Screen Share Client</h1>
   <div>
     <button id="start">Start Sharing</button>
     <button id="stop">Stop Sharing</button>
@@ -15,10 +15,9 @@
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
+    const startButton = document.getElementById('start');
+    const stopButton = document.getElementById('stop');
     let stream = null;
-
-    const startButton = document.querySelector('#start');
-    const stopButton = document.querySelector('#stop');
 
     async function startScreenShare() {
       stream = await navigator.mediaDevices.getDisplayMedia({
@@ -35,19 +34,11 @@
       canvas.height = 600;
       const context = canvas.getContext('2d', { willReadFrequently: true });
 
-      
-
       function captureAndSendFrame() {
-          context.drawImage(video, 0, 0, canvas.width, canvas.height);
-          canvas.toBlob(function(blob) {
-            const reader = new FileReader();
-            reader.onloadend = function() {
-              const imageData = reader.result;
-              socket.emit('frame', imageData);
-            };
-            reader.readAsDataURL(blob);
-          }, 'image/jpeg', 0.8);
-        setTimeout(captureAndSendFrame, 50);
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const imageDataURL = canvas.toDataURL('image/webp', 0.8);
+        socket.emit('frame', imageDataURL);
+        setTimeout(captureAndSendFrame, 100);
       }
       captureAndSendFrame();
     }

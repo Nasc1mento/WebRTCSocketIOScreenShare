@@ -16,14 +16,10 @@
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
-    const img = document.querySelector('#frame');
+    const img = document.getElementById('frame');
     
-    function displayFrame(frame) {
-      img.src = frame;
-    }
-
     socket.on('frame', (frame) => {
-      displayFrame(frame);
+      img.src = frame;
     });
   </script>
 </body>

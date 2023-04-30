@@ -6,7 +6,6 @@ const io = require('socket.io')(http, {
     origin: '*'
   }
 });
-
 let ids = [];
 
 app.use(express.static('public'));
@@ -31,10 +30,10 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', function () {
-    var index = ids.indexOf(socket.id);
+    let index = ids.indexOf(socket.id);
     ids.splice(index, 1);
     io.emit('ids', ids);
-    console.log('user disconnected id: '+socket.id); 
+    console.log('user disconnected id: '+socket.id);
   });
 });
 
