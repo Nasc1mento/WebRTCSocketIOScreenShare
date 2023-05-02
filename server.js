@@ -1,7 +1,13 @@
 const express = require('express');
+const https = require('https');
+const fs = require('fs');
 const app = express();
-const http = require('http').createServer(app);
-const io = require('socket.io')(http, {
+const options = {
+  key: fs.readFileSync('private.key'),     // Path to your private key file
+  cert: fs.readFileSync('certificate.crt') // Path to your certificate file
+};
+const server = https.createServer(options, app);
+const io = require('socket.io')(server, {
   cors: {
     origin: '*'
   }
@@ -19,7 +25,7 @@ app.get('/client', (req, res) => {
 });
 
 io.on('connection', (socket) => {
-  console.log('user connected id: '+socket.id);
+  console.log('user connected id: ' + socket.id);
   ids.push(socket.id); 
   io.emit('ids', ids);
 
@@ -33,11 +39,13 @@ io.on('connection', (socket) => {
     let index = ids.indexOf(socket.id);
     ids.splice(index, 1);
     io.emit('ids', ids);
-    console.log('user disconnected id: '+socket.id);
+    console.log('user disconnected id: ' + socket.id);
   });
 });
 
-
-http.listen(3000, () => {
-  console.log('listening on *:3000');
+server.listen(6060, () => {
+  console.log('Server is running on port 443');
 });
+
+
+
