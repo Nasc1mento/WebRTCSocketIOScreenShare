@@ -34,13 +34,19 @@
       canvas.height = 600;
       const context = canvas.getContext('2d', { willReadFrequently: true });
 
+      let worker = new Worker('webworker.js')
+
+      worker.onmessage = (e) => {
+        captureAndSendFrame();        
+      };
+
+
       function captureAndSendFrame() {
+        console.log('cheguei aqui')
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         const imageDataURL = canvas.toDataURL('image/webp', 0.8);
         socket.emit('frame', imageDataURL);
-        setTimeout(captureAndSendFrame, 100);
       }
-      captureAndSendFrame();
     }
 
     function stopScreenShare() {
