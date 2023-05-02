@@ -1,11 +1,18 @@
 const express = require('express');
+const https = require('https');
+const fs = require('fs');
 const app = express();
-const http = require('http').createServer(app);
-const io = require('socket.io')(http, {
+const options = {
+  key: fs.readFileSync('private.key'),     // Path to your private key file
+  cert: fs.readFileSync('certificate.crt') // Path to your certificate file
+};
+const server = https.createServer(options, app);
+const io = require('socket.io')(server, {
   cors: {
     origin: '*'
   }
 });
+let ids = [];
 
 app.use(express.static('public'));
 
@@ -18,21 +25,25 @@ app.get('/client', (req, res) => {
 });
 
 io.on('connection', (socket) => {
-  console.log('a user connected');
+  console.log('user connected id: ' + socket.id);
+  ids.push(socket.id); 
+  io.emit('ids', ids);
 
-  socket.on('offer', (offer) => {
-    socket.broadcast.emit('offer', offer);
+  socket.on('frame', (frame) => {
+    ids.forEach(id => {
+      io.to(id).emit('frame', frame);
+    });
   });
 
-  socket.on('answer', (answer) => {
-    socket.broadcast.emit('answer', answer);
-  });
-
-  socket.on('candidate', (candidate) => {
-    socket.broadcast.emit('candidate', candidate);
+  socket.on('disconnect', function () {
+    let index = ids.indexOf(socket.id);
+    ids.splice(index, 1);
+    io.emit('ids', ids);
+    console.log('user disconnected id: ' + socket.id);
   });
 });
 
-http.listen(3000, () => {
-  console.log('listening on *:3000');
+server.listen('0.0.0.0', 4443, () => {
+  console.log('Server is running on port 443');
 });
+
